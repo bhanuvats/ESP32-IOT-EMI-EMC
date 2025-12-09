@@ -174,7 +174,7 @@ float read_response()
 
     memcpy(&value, &raw, sizeof(value));
 
-    //ESP_LOGI("UART", "Extracted float value = %f", value);
+    ESP_LOGI("UART", "Extracted float value = %f", value);
 
     return value;
 }

@@ -466,12 +466,14 @@ void CombinerThread(void *arg)
 	char *buff_th3 = NULL;
 	char *buff_th4 = NULL;
 	char *buff_th5 = NULL;
+	char *buff_th6 = NULL;
 
     buff_th1 = (char *)malloc(600 * sizeof(char));
     buff_th2 = (char *)malloc(600 * sizeof(char));
     buff_th3 = (char *)malloc(600 * sizeof(char));
     buff_th4 = (char *)malloc(200 * sizeof(char));
     buff_th5 = (char *)malloc(200 * sizeof(char));
+    buff_th6 = (char *)malloc(200 * sizeof(char));
 	
 	
     int received_mask = 0;
@@ -493,58 +495,63 @@ void CombinerThread(void *arg)
         	
         	continue;
     	}
-            if(pkt.thread_id == 16)
-            {
-                snprintf(buff_th5,200, "MODBUS RTU DATA:\n%f\n", pkt.rtu_data);
-                //ESP_LOGI("Partial", "%s",buff_th5);
-            }
-            if(pkt.thread_id == 8)
-            {
-                snprintf(buff_th4,200, "MODBUS TCP DATA:\n%f\n", pkt.tcp_data);
-                //ESP_LOGI("Partial", "%s",buff_th4);
-            }
-            else if(pkt.thread_id == 4)
-            {
-                snprintf(buff_th3,600, "EC200U DATA:\n%s\n", pkt.data);
-            }
-            else if(pkt.thread_id == 2)
-            {
-                snprintf(buff_th2,600, "LORA DATA:\n%s\n", pkt.data);
-            }
-             if(pkt.thread_id == 1)
-             {
-                 snprintf(buff_th1,600, "GPS DATA:\n%s\n", pkt.data);
-             }
+        if(pkt.thread_id == 32)
+        {
+            snprintf(buff_th6,200, "i2c Address detected at :\n0x%d\n", pkt.i2c_address);
+            //ESP_LOGI("Partial", "%s",buff_th5);
+        }
+        else if(pkt.thread_id == 16)
+        {
+            snprintf(buff_th5,200, "MODBUS RTU DATA:\n%f\n", pkt.rtu_data);
+            //ESP_LOGI("Partial", "%s",buff_th5);
+        }
+        else if(pkt.thread_id == 8)
+        {
+            snprintf(buff_th4,200, "MODBUS TCP DATA:\n%f\n", pkt.tcp_data);
+            //ESP_LOGI("Partial", "%s",buff_th4);
+        }
+        else if(pkt.thread_id == 4)
+        {
+            snprintf(buff_th3,600, "EC200U DATA:\n%s\n", pkt.data);
+        }
+        else if(pkt.thread_id == 2)
+        {
+            snprintf(buff_th2,600, "LORA DATA:\n%s\n", pkt.data);
+        }
+        else if(pkt.thread_id == 1)
+        {
+            snprintf(buff_th1,600, "GPS DATA:\n%s\n", pkt.data);
+        }
 
-            received_mask |= (pkt.thread_id);
+        received_mask |= (pkt.thread_id);
 
-            if (received_mask == 0x1f)    // 0b11111 = 5 threads 0x1f
-            {
-                CombinedPacket combined;
+        if (received_mask == 0x3f)    // 0b11111 = 5 threads 0x1f
+        {
+            CombinedPacket combined;
 
-                snprintf(combined.full_line, sizeof(combined.full_line),
-                         "\nTimestamp: %ldms\n%s%s%s%s%s",
-                         app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5);
-                //snprintf(combined.full_line, sizeof(combined.full_line),"\nTimestamp: %ldms\n%s%s\n",app_millis(),buff_th4,buff_th5);
-                //ESP_LOGI("Combining", "%s", combined.full_line);
-                
-                if (strlen(combined.full_line) >= sizeof(combined.full_line)) {
-                    ESP_LOGI("Combining", "BUFFER OVERFLOW DETECTED!");
-                }
-
-                // Reset mask
-                received_mask = 0;
-
-                // Send result to SD writer
-                //xQueueSend(fullQueue, &combined, portMAX_DELAY);
-                ring_buffer_push(&g_tx_ring, &combined);
-                
-                // free(buff_th1);
-    			// free(buff_th2);
-    			// free(buff_th3);
-    			// free(buff_th4);
-    			// free(buff_th5); 
+            snprintf(combined.full_line, sizeof(combined.full_line),
+                        "\nTimestamp: %ldms\n%s%s%s%s%s%s",
+                        app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5, buff_th6);
+            //snprintf(combined.full_line, sizeof(combined.full_line),"\nTimestamp: %ldms\n%s%s\n",app_millis(),buff_th4,buff_th5);
+            //ESP_LOGI("Combining", "%s", combined.full_line);
+            
+            if (strlen(combined.full_line) >= sizeof(combined.full_line)) {
+                ESP_LOGI("Combining", "BUFFER OVERFLOW DETECTED!");
             }
+
+            // Reset mask
+            received_mask = 0;
+
+            // Send result to SD writer
+            //xQueueSend(fullQueue, &combined, portMAX_DELAY);
+            ring_buffer_push(&g_tx_ring, &combined);
+            
+            // free(buff_th1);
+            // free(buff_th2);
+            // free(buff_th3);
+            // free(buff_th4);
+            // free(buff_th5); 
+        }
         vTaskDelay(150 / portTICK_PERIOD_MS);
     }
 }
@@ -585,6 +592,7 @@ void app_main(void)
 	
 
 	gpio_init_u();
+    i2c_main();
 	
      // Initialize UARTs
    /* for (int i = 0; i < 4; i++) {
@@ -596,7 +604,7 @@ void app_main(void)
 	init_uart(uart_ports[2], uart_tx_pins[2], uart_rx_pins[2],115200, "none");
 	init_uart(uart_ports[3], uart_tx_pins[3], uart_rx_pins[3],19200,"even");
 
-
+    
 	ec200_network();
     sd_card();
     eth();

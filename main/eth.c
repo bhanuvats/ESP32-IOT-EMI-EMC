@@ -251,7 +251,7 @@ void modbus_tcp_server_task(void *pvParameters)
 
         memcpy(&modbus, &raw, sizeof(modbus));
        // memcpy(modbus_rx_buffer, &raw, sizeof(raw));
-        //ESP_LOGI("MODBUS TCP/IP", "Extracted float value = %f", modbus);
+        ESP_LOGI("MODBUS TCP/IP", "Extracted float value = %f", modbus);
 
         //snprintf(pkt.data, sizeof(pkt.data), "%f", modbus);
 		pkt.thread_id = 8;

@@ -5,3 +5,7 @@ dependencies:
     path: ${IDF_PATH}/examples/ethernet/basic/components/ethernet_init
   espressif/iperf-cmd:
     version: "~0.1.1"
+  cmd_nvs:
+    path: ${IDF_PATH}/examples/system/console/advanced/components/cmd_nvs
+  cmd_wifi:
+    path: ${IDF_PATH}/examples/system/console/advanced/components/cmd_wifi

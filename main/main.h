@@ -21,6 +21,8 @@
 #include "meter_emi_emc.h"
 #include "sd_card.h"
 
+#include "i2c_tools.h"
+
 #include <ctype.h>
 #include "freertos/queue.h"
 
@@ -29,6 +31,7 @@ typedef struct {
    char data[512];         // data sent by each thread
    float tcp_data;
    float rtu_data;
+   int i2c_address;
 } PartialPacket;
 
 typedef struct {
