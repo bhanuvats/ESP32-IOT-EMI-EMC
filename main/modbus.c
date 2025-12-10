@@ -137,8 +137,8 @@ void ftoa(float n, char* res, int afterpoint)
 
 float read_response()
 {
-  char buf[32];
-    int i = 0;
+    char buf[32];
+    int point = 0;
     unsigned char string[10];
     float value;
     unsigned char read_buf[1024];
@@ -152,13 +152,15 @@ float read_response()
     {
         printf("Error reading: %s\n","something error at reading responce");
     }
-     //for(int i=0;i<num_bytes;i++){
+    for(int i=0;i<num_bytes;i++){
 
-         //printf(" raw_data :");
-          //printf(" %02X  ",read_buf[i]);
-          //printf("\n");
-     //}
-    // printf("\n");
+        //printf(" raw_data :");
+        //printf(" %02X  ",read_buf[i]);
+        //printf("\n");
+        if(read_buf[i] == 4)
+            point = i;
+    }
+    //printf("\n");
 
     //uint16_t reg_hi = (read_buf[5] << 8) | read_buf[6];
     //uint16_t reg_lo = (read_buf[3] << 8) | read_buf[4];
@@ -167,14 +169,14 @@ float read_response()
     //ftoa(value,buf,6);
     //printf("value before scaling : %s\n", buf);
     //memset(&buf,0,sizeof(buf));
-    raw = ( (uint32_t)read_buf[4] << 24 )
-                 | ( (uint32_t)read_buf[5] << 16 )
-                 | ( (uint32_t)read_buf[6] << 8  )
-                 | ( (uint32_t)read_buf[7] );
+    raw = ( (uint32_t)read_buf[point+1] << 24 )
+                 | ( (uint32_t)read_buf[point+2] << 16 )
+                 | ( (uint32_t)read_buf[point+3] << 8  )
+                 | ( (uint32_t)read_buf[point+4] );
 
     memcpy(&value, &raw, sizeof(value));
 
-    ESP_LOGI("UART", "Extracted float value = %f", value);
+    //ESP_LOGI("MODBUS RTU", "Extracted float value = %f", value);
 
     return value;
 }

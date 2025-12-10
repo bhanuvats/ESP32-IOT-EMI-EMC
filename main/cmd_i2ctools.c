@@ -18,6 +18,7 @@
 #include "esp_console.h"
 #include "esp_log.h"
 #include "main.h"
+#include "ring_buffer.h"
 
 
 #define I2C_TOOL_TIMEOUT_VALUE_MS (50)
@@ -134,6 +135,7 @@ int do_i2cdetect_cmd(int argc, char **argv)
 
 void i2c_detect(void)
 {
+    PartialPacket pkt;
     uint8_t address;
     printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\r\n");
     for (int i = 0; i < 128; i += 16) {
@@ -146,6 +148,7 @@ void i2c_detect(void)
                 printf("%02x ", address);
                 pkt.thread_id = 32;
                 pkt.i2c_address  = address;
+                ring_buffer_push(&g_modbus_tcp_ring, &pkt);
             } else if (ret == ESP_ERR_TIMEOUT) {
                 printf("UU ");
             } else {

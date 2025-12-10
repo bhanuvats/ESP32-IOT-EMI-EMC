@@ -132,6 +132,7 @@ static void gps_rx_task(void *arg)
     //PartialPacket pkt;
     
     while (1) {
+        PartialPacket pkt;
         const int rxBytes = uart_read_bytes(uart_ports[0], data, GPS_RX_BUF_SIZE, 50 / portTICK_PERIOD_MS);
         if (rxBytes > 0) {
             //ESP_LOGI(RX_TASK_TAG, "Read %d bytes: '%s'", rxBytes, data);
@@ -299,6 +300,7 @@ static void lora_rx_task(void *arg)
     
    // esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
     while (1) {
+        PartialPacket pkt;
     	//memset(L_rx_buffer, 0, sizeof(g_rx_buffer));
 		uint8_t* data = (uint8_t*) malloc(LORA_RX_BUF_SIZE + 1);
         sendData(uart_ports[1],RX_TASK_TAG, "AT+QP2P=1\r\n");
@@ -432,6 +434,7 @@ static void ec200_rx_task(void *arg)
 
     while (1) {
 
+        PartialPacket pkt;
 
         sendData(uart_ports[2],RX_TASK_TAG, CMD_PING);
         //sendAT(CMD_PING,100);
@@ -454,7 +457,13 @@ static void ec200_rx_task(void *arg)
     free(data);
 }
 
-
+// void i2cThread(void *arg)
+// {
+//     while(1)
+//     {
+//         i2c_detect();
+//     }
+// }
 // ---------------------- COMBINER THREAD -------------------- //
 
 void CombinerThread(void *arg)
@@ -497,38 +506,38 @@ void CombinerThread(void *arg)
     	}
         if(pkt.thread_id == 32)
         {
-            snprintf(buff_th6,200, "i2c Address detected at :\n0x%d\n", pkt.i2c_address);
-            ESP_LOGI("Partial", "%s",buff_th6);
+            snprintf(buff_th6,200, "i2c Address detected at :\n%02x\n", pkt.i2c_address);
+            //ESP_LOGI("Partial", "%s",buff_th6);
         }
         else if(pkt.thread_id == 16)
         {
             snprintf(buff_th5,200, "MODBUS RTU DATA:\n%f\n", pkt.rtu_data);
-            ESP_LOGI("Partial", "%s",buff_th5);
+            //ESP_LOGI("Partial", "%s",buff_th5);
         }
         else if(pkt.thread_id == 8)
         {
             snprintf(buff_th4,200, "MODBUS TCP DATA:\n%f\n", pkt.tcp_data);
-            ESP_LOGI("Partial", "%s",buff_th4);
+            //ESP_LOGI("Partial", "%s",buff_th4);
         }
         else if(pkt.thread_id == 4)
         {
             snprintf(buff_th3,600, "EC200U DATA:\n%s\n", pkt.data);
-            ESP_LOGI("Partial", "%s",buff_th3);
+            //ESP_LOGI("Partial", "%s",buff_th3);
         }
         else if(pkt.thread_id == 2)
         {
             snprintf(buff_th2,600, "LORA DATA:\n%s\n", pkt.data);
-            ESP_LOGI("Partial", "%s",buff_th2);
+            //ESP_LOGI("Partial", "%s",buff_th2);
         }
         else if(pkt.thread_id == 1)
         {
             snprintf(buff_th1,600, "GPS DATA:\n%s\n", pkt.data);
-            ESP_LOGI("Partial", "%s",buff_th1);
+            //ESP_LOGI("Partial", "%s",buff_th1);
         }
 
         received_mask |= (pkt.thread_id);
 
-        if (received_mask == 0x3f)    // 0b11111 = 5 threads 0x1f
+        if (received_mask == 0x1f)    // 0b11111 = 5 threads 0x1f
         {
             CombinedPacket combined;
 
@@ -593,6 +602,7 @@ void app_main(void)
     ring_buffer_init(&g_tx_ring, RING_BUFFER_SIZE, sizeof(CombinedPacket));
 
 	
+    eth();
 
 	gpio_init_u();
     i2c_main();
@@ -610,7 +620,6 @@ void app_main(void)
     
 	ec200_network();
     sd_card();
-    eth();
 
 	myMutex = xSemaphoreCreateMutex();
 	if (myMutex == NULL) {
@@ -631,46 +640,46 @@ void app_main(void)
 	
 	//xTaskCreate(phase1Values, "RS485_task", CONFIG_RS485_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
 	//xTaskCreate(sd_read, "SD_CARD", CONFIG_SD_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
-	xTaskCreate(CombinerThread, "Combiner", 8001, NULL, 6, NULL);
+	//xTaskCreate(i2cThread, "i2c_search", CONFIG_EC200_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 2, NULL);
+    xTaskCreate(CombinerThread, "Combiner", 8001, NULL, 6, NULL);
 	xTaskCreate(SDWriterThread, "SDWriter", 8096, NULL, 4, NULL);
 
       while(1)
 	{
-		    //send_data_to_server();
-            gpio_set_level(RS485_PIN, 1);
-	
-            esp_rom_delay_us(500);
-            
-            int result = uart_write_bytes(uart_ports[3], voltage1, sizeof(voltage1));
-            //if (result == sizeof(voltage1))
-            //{
-               //ESP_LOGI("Phase 1 ", "Wrote Voltage %d bytes", result);
+        gpio_set_level(RS485_PIN, 1);
+
+        esp_rom_delay_us(500);
+        
+        int result = uart_write_bytes(uart_ports[3], voltage1, sizeof(voltage1));
+        //if (result == sizeof(voltage1))
+        //{
+            //ESP_LOGI("Phase 1 ", "Wrote Voltage %d bytes", result);
+        //}
+        result = 0;
+        
+        esp_rom_delay_us(5000);
+        
+        gpio_set_level(RS485_PIN, 0);
+        
+        volt_value1 = read_response();
+        
+        if(volt_value1 > 0.0 && volt_value1 < 270.0){
+
+            pkt.thread_id = 16;
+            pkt.rtu_data  = volt_value1;
+            volt_value1 = 0.0;
+
+            //if (xSemaphoreTake(myMutex, portMAX_DELAY) == pdTRUE) {
+
+
+            //xQueueSend(partialQueue, &pkt, portMAX_DELAY);
+            ring_buffer_push(&g_modbus_tcp_ring, &pkt);
+
+            //xSemaphoreGive(myMutex);
             //}
-            result = 0;
-            
-            esp_rom_delay_us(5000);
-            
-            gpio_set_level(RS485_PIN, 0);
-            
-            volt_value1 = read_response();
-            
-            if(volt_value1 > 0.0 && volt_value1 < 270.0){
+        }
 
-	            pkt.thread_id = 16;
-	            pkt.rtu_data  = volt_value1;
-	            volt_value1 = 0.0;
-	
-	            //if (xSemaphoreTake(myMutex, portMAX_DELAY) == pdTRUE) {
-	
-	
-	            //xQueueSend(partialQueue, &pkt, portMAX_DELAY);
-	            ring_buffer_push(&g_modbus_tcp_ring, &pkt);
-	
-	            //xSemaphoreGive(myMutex);
-	            //}
-	        }
-
-		vTaskDelay(2000 / portTICK_PERIOD_MS);
-		}
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
 	
 }

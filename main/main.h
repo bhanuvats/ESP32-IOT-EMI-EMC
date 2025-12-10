@@ -31,7 +31,7 @@ typedef struct {
    char data[512];         // data sent by each thread
    float tcp_data;
    float rtu_data;
-   int i2c_address;
+   uint8_t i2c_address;
 } PartialPacket;
 
 typedef struct {

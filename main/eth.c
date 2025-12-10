@@ -218,6 +218,7 @@ void modbus_tcp_server_task(void *pvParameters)
 
     while(1)
     {
+        PartialPacket pkt;
         eth_is_link_ready();
     	memset(modbus_rx_buffer, 0, sizeof(modbus_rx_buffer));
         uint8_t frame[12];
@@ -251,7 +252,7 @@ void modbus_tcp_server_task(void *pvParameters)
 
         memcpy(&modbus, &raw, sizeof(modbus));
        // memcpy(modbus_rx_buffer, &raw, sizeof(raw));
-        ESP_LOGI("MODBUS TCP/IP", "Extracted float value = %f", modbus);
+        //ESP_LOGI("MODBUS TCP/IP", "Extracted float value = %f", modbus);
 
         //snprintf(pkt.data, sizeof(pkt.data), "%f", modbus);
 		pkt.thread_id = 8;
@@ -297,7 +298,7 @@ void eth(void)
 
 
 
-    xTaskCreate(modbus_tcp_server_task, "modbus_tcp", 4096, NULL, 8, NULL);
+    xTaskCreate(modbus_tcp_server_task, "modbus_tcp", 4096, NULL, configMAX_PRIORITIES - 2, NULL);
 
    
 }
