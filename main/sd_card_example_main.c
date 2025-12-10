@@ -170,12 +170,12 @@ void sd_card()
     ESP_LOGI(SD, "Filesystem mounted");
 
     // Card has been initialized, print its properties
-    /*sdmmc_card_print_info(stdout, card);
+    sdmmc_card_print_info(stdout, card);
 
     // Use POSIX and C standard library functions to work with files:
 
     // First create a file.
-    const char *file_hello = MOUNT_POINT"/hello.txt";
+    /*const char *file_hello = MOUNT_POINT"/hello.txt";
     char data[EXAMPLE_MAX_CHAR_SIZE];
     snprintf(data, EXAMPLE_MAX_CHAR_SIZE, "%s %s!\n", "Hello", card->cid.name);
     ret = s_example_write_file(file_hello, data);

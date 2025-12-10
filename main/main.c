@@ -498,29 +498,32 @@ void CombinerThread(void *arg)
         if(pkt.thread_id == 32)
         {
             snprintf(buff_th6,200, "i2c Address detected at :\n0x%d\n", pkt.i2c_address);
-            //ESP_LOGI("Partial", "%s",buff_th5);
+            ESP_LOGI("Partial", "%s",buff_th6);
         }
         else if(pkt.thread_id == 16)
         {
             snprintf(buff_th5,200, "MODBUS RTU DATA:\n%f\n", pkt.rtu_data);
-            //ESP_LOGI("Partial", "%s",buff_th5);
+            ESP_LOGI("Partial", "%s",buff_th5);
         }
         else if(pkt.thread_id == 8)
         {
             snprintf(buff_th4,200, "MODBUS TCP DATA:\n%f\n", pkt.tcp_data);
-            //ESP_LOGI("Partial", "%s",buff_th4);
+            ESP_LOGI("Partial", "%s",buff_th4);
         }
         else if(pkt.thread_id == 4)
         {
             snprintf(buff_th3,600, "EC200U DATA:\n%s\n", pkt.data);
+            ESP_LOGI("Partial", "%s",buff_th3);
         }
         else if(pkt.thread_id == 2)
         {
             snprintf(buff_th2,600, "LORA DATA:\n%s\n", pkt.data);
+            ESP_LOGI("Partial", "%s",buff_th2);
         }
         else if(pkt.thread_id == 1)
         {
             snprintf(buff_th1,600, "GPS DATA:\n%s\n", pkt.data);
+            ESP_LOGI("Partial", "%s",buff_th1);
         }
 
         received_mask |= (pkt.thread_id);
