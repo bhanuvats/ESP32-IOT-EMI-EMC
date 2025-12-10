@@ -506,6 +506,7 @@ void CombinerThread(void *arg)
     	}
         if(pkt.thread_id == 32)
         {
+			pkt.thread_id = 0;
             snprintf(buff_th6,200, "i2c Address detected at :\n%02x\n", pkt.i2c_address);
             //ESP_LOGI("Partial", "%s",buff_th6);
         }
