@@ -8,11 +8,8 @@
 */
 
 
-#include"eth.h"
-#include "meter_emi_emc.h"
 
 #include "main.h"
-#include "ring_buffer.h"
 #include "esp_timer.h"
 
 
@@ -78,6 +75,10 @@ PartialPacket pkt;             // actual definition
 ring_buffer_t g_modbus_tcp_ring;
 ring_buffer_t g_tx_ring;
 
+bool scan_start = false;
+
+const char *TAG = "EMI-EMC";
+
 static uint32_t app_millis(void)
 {
     return (uint32_t)(esp_timer_get_time() / 1000ULL);
@@ -125,6 +126,7 @@ void init_uart(uart_port_t uart_num, int tx_pin, int rx_pin, int baud_rate, char
 
 static void gps_rx_task(void *arg)
 {
+    printf("GPS task started\n");
     static const char *RX_TASK_TAG = "gps_RX_TASK";
     //esp_log_level_set("gps_RX_TASK", ESP_LOG_NONE);
    // esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
@@ -294,6 +296,7 @@ int sendData(uart_port_t port,const char* logName, const char* data)
 
 static void lora_rx_task(void *arg)
 {
+    printf("LORA task started\n");
     static const char *RX_TASK_TAG = "LORA_RX_TASK";
     esp_log_level_set("RX_TASK_TAG", ESP_LOG_NONE);
    // PartialPacket pkt;
@@ -387,21 +390,21 @@ static void ec200_network()
   // === SIM & Network ===
     sendAT(uart_ports[2],CMD_ECHO_OFF, 1000);             
     sendAT(uart_ports[2],CMD_CHECK_SIM, 1000);       
-    sendAT(uart_ports[2],CMD_NETWORK_REG, 2000);
-    sendAT(uart_ports[2],CMD_NETWORK_PDP_CFG, 2000);
+    sendAT(uart_ports[2],CMD_NETWORK_REG, 1000);
+    sendAT(uart_ports[2],CMD_NETWORK_PDP_CFG, 1000);
    // sendAT(UART_NUM_2,CMD_ACTIVATE_PDP, 2000);
     sendAT(uart_ports[2],"AT+CPIN?\r\n",1000);
-    sendAT(uart_ports[2],"AT+CFUN=1\r\n", 2000);
-    sendAT(uart_ports[2],"AT+COPS?\r\n", 2000);
+    sendAT(uart_ports[2],"AT+CFUN=1\r\n", 1000);
+    sendAT(uart_ports[2],"AT+COPS?\r\n", 1000);
     sendAT(uart_ports[2],"AT+CSQ\r\n", 1000);
-    sendAT(uart_ports[2],"AT+CGATT=1\r\n", 2000);
-    sendAT(uart_ports[2],"AT+QIACT?\r\n", 2000);
-    sendAT(uart_ports[2], "AT+QHTTPCFG=\"contextid\",1\r\n", 2000);
-    sendAT(uart_ports[2], "AT+QHTTPCFG=\"requestheader\",1\r\n", 2000);
-    sendAT(uart_ports[2], "AT+QHTTPCFG=\"responseheader\",1\r\n", 2000);
+    sendAT(uart_ports[2],"AT+CGATT=1\r\n", 1000);
+    sendAT(uart_ports[2],"AT+QIACT?\r\n", 1000);
+    sendAT(uart_ports[2], "AT+QHTTPCFG=\"contextid\",1\r\n", 1000);
+    sendAT(uart_ports[2], "AT+QHTTPCFG=\"requestheader\",1\r\n", 1000);
+    sendAT(uart_ports[2], "AT+QHTTPCFG=\"responseheader\",1\r\n", 1000);
     sendAT(uart_ports[2],"AT+CGDCONT=1,\"IP\",\"airtelgprs.com\"\r\n",1000);
-    sendAT(uart_ports[2],CMD_ACTIVATE_PDP, 2000);
-    sendAT(uart_ports[2],"AT+CGACT=1,1\r\n", 2000);
+    sendAT(uart_ports[2],CMD_ACTIVATE_PDP, 1000);
+    sendAT(uart_ports[2],"AT+CGACT=1,1\r\n", 1000);
     sendAT(uart_ports[2],"AT+CGPADDR=1\r\n", 1000);
     IMEI(uart_ports[2],"AT+GSN\r\n", 1000);
     //timed_AT(UART_NUM_2,"AT+CCLK?\r\n",1000);
@@ -424,6 +427,7 @@ static void ec200_tx_task(void *arg)
 
 static void ec200_rx_task(void *arg)
 {
+    printf("EC200 task started\n");
     static const char *RX_TASK_TAG = "ec200_RX_TASK";
     esp_log_level_set("RX_TASK_TAG", ESP_LOG_NONE);
    // esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
@@ -468,6 +472,7 @@ static void ec200_rx_task(void *arg)
 
 void CombinerThread(void *arg)
 {
+    printf("Combine task started\n");
     PartialPacket pkt;
     //char buffer[THREAD_COUNT][2056];
     char *buff_th1 = NULL;
@@ -476,13 +481,17 @@ void CombinerThread(void *arg)
 	char *buff_th4 = NULL;
 	char *buff_th5 = NULL;
 	char *buff_th6 = NULL;
+	char *buff_th7 = NULL;
 
     buff_th1 = (char *)malloc(600 * sizeof(char));
     buff_th2 = (char *)malloc(600 * sizeof(char));
     buff_th3 = (char *)malloc(600 * sizeof(char));
     buff_th4 = (char *)malloc(200 * sizeof(char));
     buff_th5 = (char *)malloc(200 * sizeof(char));
-    buff_th6 = (char *)malloc(200 * sizeof(char));
+    buff_th6 = (char *)malloc(600 * sizeof(char));
+    buff_th7 = (char *)malloc(300 * sizeof(char));
+
+    snprintf(buff_th7,300, "i2c Address of TA101 detected at : \n0x17\n");
 	
 	
     int received_mask = 0;
@@ -491,6 +500,7 @@ void CombinerThread(void *arg)
 
     while (1)
     {
+        
 		if (!ring_buffer_pop(&g_modbus_tcp_ring, &pkt)) {
             vTaskDelay(pdMS_TO_TICKS(50));
             continue;
@@ -504,9 +514,15 @@ void CombinerThread(void *arg)
         	
         	continue;
     	}
-        if(pkt.thread_id == 32)
+        if(pkt.thread_id == 3)
         {
-            snprintf(buff_th6,200, "i2c Address detected at :\n%02x\n", pkt.i2c_address);
+            pkt.thread_id = 0;
+            snprintf(buff_th7,300, "i2c Address of TA101 detected at : \n0x17\n");
+            //ESP_LOGI("Partial", "%s",buff_th6);
+        }
+        else if(pkt.thread_id == 32)
+        {
+            snprintf(buff_th6,600, "WiFi Scan list :\n%s\n", pkt.data);
             //ESP_LOGI("Partial", "%s",buff_th6);
         }
         else if(pkt.thread_id == 16)
@@ -537,13 +553,13 @@ void CombinerThread(void *arg)
 
         received_mask |= (pkt.thread_id);
 
-        if (received_mask == 0x1f)    // 0b11111 = 5 threads 0x1f
+        if (received_mask == 0x3f)    // 0b11111 = 5 threads 0x1f
         {
             CombinedPacket combined;
 
             snprintf(combined.full_line, sizeof(combined.full_line),
-                        "\nTimestamp: %ldms\n%s%s%s%s%s%s",
-                        app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5, buff_th6);
+                        "\nTimestamp: %ldms\n%s%s%s%s%s%s%s",
+                        app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5, buff_th6 ,buff_th7);
             //snprintf(combined.full_line, sizeof(combined.full_line),"\nTimestamp: %ldms\n%s%s\n",app_millis(),buff_th4,buff_th5);
             //ESP_LOGI("Combining", "%s", combined.full_line);
             
@@ -564,6 +580,7 @@ void CombinerThread(void *arg)
             // free(buff_th4);
             // free(buff_th5); 
         }
+        //printf("End of Combiner\n");
         vTaskDelay(150 / portTICK_PERIOD_MS);
     }
 }
@@ -572,6 +589,8 @@ void CombinerThread(void *arg)
 
 void SDWriterThread(void *arg)
 {
+    //scan_start = true;
+    printf("SD Card task started\n");
     CombinedPacket combined;
 
     while (1)
@@ -580,71 +599,68 @@ void SDWriterThread(void *arg)
             vTaskDelay(pdMS_TO_TICKS(50));
             continue;
         }
-            combined.full_line[strlen(combined.full_line)-1] = '\0';
-            ESP_LOGI("SDWriter", "%s", combined.full_line);
-        	int ret = s_example_write_file(file_SD, combined.full_line);
-        	if (ret != ESP_OK) {
-                vTaskDelay(1000);
-        	    continue;;
-        	}
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        combined.full_line[strlen(combined.full_line)-1] = '\0';
+        ESP_LOGI("SDWriter", "%s", combined.full_line);
+        int ret = s_example_write_file(file_SD, combined.full_line);
+        if (ret != ESP_OK) {
+            vTaskDelay(1000);
+            continue;;
         }
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
 }
+// volatile unsigned tick_count;
+// void vApplicationTickHook(void)
+// {
+//     tick_count++;
+// }
 
 void app_main(void)
 {
     unsigned char voltage1[] = {0x01, 0x03, 0x0B, 0xD3, 0x00, 0x02, 0x37, 0xD6}; 
-	//esp_log_level_set("*", ESP_LOG_WARN);
+    //esp_log_level_set("*", ESP_LOG_WARN);
 
-	// partialQueue = xQueueCreate(200, sizeof(PartialPacket));
-	// fullQueue    = xQueueCreate(10, sizeof(CombinedPacket));
-    ring_buffer_init(&g_modbus_tcp_ring, RING_BUFFER_SIZE, sizeof(PartialPacket));
-    ring_buffer_init(&g_tx_ring, RING_BUFFER_SIZE, sizeof(CombinedPacket));
-
-	
-    eth();
-
-	gpio_init_u();
+    
     i2c_main();
-	
-     // Initialize UARTs
-   /* for (int i = 0; i < 4; i++) {
-        init_uart(uart_ports[i], uart_tx_pins[i], uart_rx_pins[i]);
-    }*/
 
-	init_uart(uart_ports[0], uart_tx_pins[0], uart_rx_pins[0],9600,"none");
+    init_uart(uart_ports[0], uart_tx_pins[0], uart_rx_pins[0],9600,"none");
 	init_uart(uart_ports[1], uart_tx_pins[1], uart_rx_pins[1],115200,"none");
 	init_uart(uart_ports[2], uart_tx_pins[2], uart_rx_pins[2],115200, "none");
 	init_uart(uart_ports[3], uart_tx_pins[3], uart_rx_pins[3],19200,"even");
 
     
-	ec200_network();
-    sd_card();
 
-	myMutex = xSemaphoreCreateMutex();
-	if (myMutex == NULL) {
-	    ESP_LOGE("MAIN", "Failed to create  mymutex!");
-	    while(1);
-	}
+    ring_buffer_init(&g_modbus_tcp_ring, RING_BUFFER_SIZE, sizeof(PartialPacket));
+    ring_buffer_init(&g_tx_ring, RING_BUFFER_SIZE, sizeof(CombinedPacket));
 
-	//vTaskDelay(10000 / portTICK_PERIOD_MS);
+	// myMutex = xSemaphoreCreateMutex();
+	// if (myMutex == NULL) {
+	//     ESP_LOGE("MAIN", "Failed to create  mymutex!");
+	//     while(1);
+	// }
+    
 
-	//send_data_to_server();
-    xTaskCreate(gps_rx_task, "gps_rx_task", CONFIG_GPS_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 2, NULL);
+	xTaskCreate(gps_rx_task, "gps_rx_task", 3001, NULL, configMAX_PRIORITIES - 2, NULL);
 	
-	xTaskCreate(lora_rx_task, "lora_rx_task", CONFIG_LORA_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
+	xTaskCreate(lora_rx_task, "lora_rx_task", 3001, NULL, configMAX_PRIORITIES - 1, NULL);
     //xTaskCreate(lora_tx_task, "lora_tx_task", CONFIG_LORA_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
 				
     //xTaskCreate(ec200_tx_task, "ec200_tx_task", CONFIG_EC200_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
- 	xTaskCreate(ec200_rx_task, "ec200_rx_task", CONFIG_EC200_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 2, NULL);
+ 	
 	
-	//xTaskCreate(phase1Values, "RS485_task", CONFIG_RS485_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
-	//xTaskCreate(sd_read, "SD_CARD", CONFIG_SD_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
-	//xTaskCreate(i2cThread, "i2c_search", CONFIG_EC200_TASK_STACK_SIZE, NULL, configMAX_PRIORITIES - 2, NULL);
-    xTaskCreate(CombinerThread, "Combiner", 8001, NULL, 6, NULL);
-	xTaskCreate(SDWriterThread, "SDWriter", 8096, NULL, 4, NULL);
+	xTaskCreate(CombinerThread, "Combiner", 8001, NULL, 6, NULL);
+	xTaskCreate(SDWriterThread, "SDWriter", 8001, NULL, 4, NULL);
 
-      while(1)
+    wifi_main();
+    eth();
+    sd_card();
+
+    //TODO:add the EC200 reset gpio and toggle it in the begining
+	gpio_init_u();
+    ec200_network();
+    xTaskCreate(ec200_rx_task, "ec200_rx_task", 3001, NULL, configMAX_PRIORITIES - 2, NULL);
+
+    while(1)
 	{
         gpio_set_level(RS485_PIN, 1);
 

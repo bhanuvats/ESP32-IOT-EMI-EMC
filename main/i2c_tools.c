@@ -28,6 +28,7 @@ static void initialize_filesystem(void)
 
 void i2c_main(void)
 {
+    PartialPacket pkt;
 
     i2c_master_bus_config_t i2c_bus_config = {
         .clk_source = I2C_CLK_SRC_DEFAULT,
@@ -37,12 +38,20 @@ void i2c_main(void)
         .glitch_ignore_cnt = 7,
         .flags.enable_internal_pullup = true,
     };
+    i2c_master_bus_handle_t tool_bus_handle;
 
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &tool_bus_handle));
 
-    register_i2ctools();
-    i2c_detect();
-
+    // register_i2ctools();
+    // i2c_detect();
+    uint8_t address = 0x17;
+    esp_err_t ret = i2c_master_probe(tool_bus_handle, address, 50);
+    if (ret == ESP_OK) {
+        printf("Address of TA101 is %02x \n", address);
+        // pkt.thread_id = 13;
+        // pkt.i2c_address  = 0x17;
+        // ring_buffer_push(&g_modbus_tcp_ring, &pkt);
+    }
     // start console REPL
     // ESP_ERROR_CHECK(esp_console_start_repl(repl));
 

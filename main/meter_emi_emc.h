@@ -30,7 +30,7 @@ extern float volt_value1, curr_value, powf_value, act_value, app_value;
 extern const char *filePath;
 
 
-static const char *TAG = "MODBUS_READER"; // static is okay here
+// static const char *TAG = "MODBUS_READER"; // static is okay here
 #define MAX_JSON_SIZE 3072
 extern char rs485_rx_buffer[MAX_JSON_SIZE];
 

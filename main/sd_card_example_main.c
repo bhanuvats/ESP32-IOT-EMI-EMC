@@ -11,7 +11,7 @@
 
 #include"sd_card.h"
 //#include "sdmmc_default_configs.h"
-const char *SD = "example";
+const char *SD = "SD Card";
 
 #if SOC_SDMMC_IO_POWER_EXTERNAL
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
@@ -91,6 +91,7 @@ void sd_card()
     // For setting a specific frequency, use host.max_freq_khz (range 400kHz - 40MHz for SDMMC)
     // Example: for fixed frequency of 10MHz, use host.max_freq_khz = 10000;
     sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    
 #if CONFIG_EXAMPLE_SDMMC_SPEED_HS
     host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
 #elif CONFIG_EXAMPLE_SDMMC_SPEED_UHS_I_SDR50
@@ -133,6 +134,7 @@ void sd_card()
     slot_config.width = 1;
 #endif
 
+
     // On chips where the GPIOs used for SD card can be configured, set them in
     // the slot_config structure:
 #ifdef CONFIG_SOC_SDMMC_USE_GPIO_MATRIX
@@ -150,6 +152,17 @@ void sd_card()
     // are insufficient however, please make sure 10k external pullups are
     // connected on the bus. This is for debug / example purpose only.
     slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+
+    host.slot = 0;
+    host.max_freq_khz = 40000;
+
+    slot_config.clk = 43;
+    slot_config.cmd = 44;
+    slot_config.d0 = 39;
+    slot_config.d1 = 40;
+    slot_config.d2 = 41;
+    slot_config.d3 = 42;
+    slot_config.width = 4;
 
     ESP_LOGI(SD, "Mounting filesystem");
     ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);

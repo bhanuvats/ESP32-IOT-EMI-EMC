@@ -16,12 +16,14 @@
 
 #include "hal/gpio_types.h"
 #include <inttypes.h>
-#include "AT_Command.h"
-
-#include "meter_emi_emc.h"
-#include "sd_card.h"
 
 #include "i2c_tools.h"
+#include "eth.h"
+#include "meter_emi_emc.h"
+#include "ring_buffer.h"
+#include "sd_card.h"
+#include "wifi.h"
+#include "AT_Command.h"
 
 #include <ctype.h>
 #include "freertos/queue.h"
@@ -43,3 +45,5 @@ extern QueueHandle_t partialQueue;
 extern QueueHandle_t fullQueue;
 extern uart_port_t uart_ports[];
 extern SemaphoreHandle_t myMutex;
+extern bool scan_start;
+extern const char *TAG;

@@ -21,7 +21,7 @@
 
 //#define MODBUS_PORT 502
 
-//static const char *TAG = "eth_example";
+
 
 static esp_eth_handle_t *s_eth_handles = NULL;
 static uint8_t s_eth_port_cnt = 0;
@@ -100,10 +100,10 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
 void init_ethernet_and_netif(void)
 {
     // Init TCP/IP stack first
-    ESP_ERROR_CHECK(esp_netif_init());
+    // ESP_ERROR_CHECK(esp_netif_init());
 
     // Then the default event loop
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    // ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // Init Ethernet driver (from your helper)
     ESP_ERROR_CHECK(example_eth_init(&s_eth_handles, &s_eth_port_cnt));

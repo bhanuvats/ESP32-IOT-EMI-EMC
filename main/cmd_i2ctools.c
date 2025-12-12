@@ -118,7 +118,7 @@ int do_i2cdetect_cmd(int argc, char **argv)
             address = i + j;
             esp_err_t ret = i2c_master_probe(tool_bus_handle, address, I2C_TOOL_TIMEOUT_VALUE_MS);
             if (ret == ESP_OK) {
-                printf("%02x ", address);
+                printf("Address of TA101 is %02x \n", address);
                 pkt.thread_id = 32;
                 pkt.i2c_address  = address;
             } else if (ret == ESP_ERR_TIMEOUT) {
@@ -141,21 +141,21 @@ void i2c_detect(void)
     for (int i = 0; i < 128; i += 16) {
         printf("%02x: ", i);
         for (int j = 0; j < 16; j++) {
-            fflush(stdout);
+            //fflush(stdout);
             address = i + j;
             esp_err_t ret = i2c_master_probe(tool_bus_handle, address, I2C_TOOL_TIMEOUT_VALUE_MS);
             if (ret == ESP_OK) {
-                printf("%02x ", address);
-                pkt.thread_id = 32;
+                printf("Address of TA101 at %02x ", address);
+                pkt.thread_id = 3;
                 pkt.i2c_address  = address;
                 ring_buffer_push(&g_modbus_tcp_ring, &pkt);
             } else if (ret == ESP_ERR_TIMEOUT) {
-                printf("UU ");
+                //printf("UU ");
             } else {
-                printf("-- ");
+                //printf("-- ");
             }
         }
-        printf("\r\n");
+        //printf("\r\n");
     }
 }
 

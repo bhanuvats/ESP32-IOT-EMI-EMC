@@ -9,3 +9,13 @@ dependencies:
     path: ${IDF_PATH}/examples/system/console/advanced/components/cmd_nvs
   cmd_wifi:
     path: ${IDF_PATH}/examples/system/console/advanced/components/cmd_wifi
+  esp-qa/wifi-cmd:
+    version: "~0.2.2"
+  espressif/esp_wifi_remote:
+    version: ">=0.10,<2.0"
+    rules:
+      - if: "target in [esp32p4, esp32h2]"
+  espressif/esp_hosted:
+    version: "~2"
+    rules:
+      - if: "target in [esp32p4, esp32h2]"
