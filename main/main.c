@@ -75,6 +75,7 @@ PartialPacket pkt;             // actual definition
 ring_buffer_t g_modbus_tcp_ring;
 ring_buffer_t g_tx_ring;
 
+
 bool scan_start = false;
 
 const char *TAG = "EMI-EMC";
@@ -140,7 +141,7 @@ static void gps_rx_task(void *arg)
             //ESP_LOGI(RX_TASK_TAG, "Read %d bytes: '%s'", rxBytes, data);
             //ESP_LOG_BUFFER_HEXDUMP(RX_TASK_TAG, data, rxBytes, ESP_LOG_INFO);
 
-			snprintf(pkt.data, sizeof(pkt.data), "%s", data);
+			snprintf(pkt.data, sizeof(pkt.data) - 1, "%s", data);
 			pkt.thread_id = 1;
 			ring_buffer_push(&g_modbus_tcp_ring, &pkt);
         
@@ -489,9 +490,9 @@ void CombinerThread(void *arg)
     buff_th4 = (char *)malloc(200 * sizeof(char));
     buff_th5 = (char *)malloc(200 * sizeof(char));
     buff_th6 = (char *)malloc(600 * sizeof(char));
-    buff_th7 = (char *)malloc(300 * sizeof(char));
+    buff_th7 = (char *)malloc(200 * sizeof(char));
 
-    snprintf(buff_th7,300, "i2c Address of TA101 detected at : \n0x17\n");
+    snprintf(buff_th7,200, "i2c Address of TA101 detected at : \n0x17\n");
 	
 	
     int received_mask = 0;
@@ -517,7 +518,7 @@ void CombinerThread(void *arg)
         if(pkt.thread_id == 3)
         {
             pkt.thread_id = 0;
-            snprintf(buff_th7,300, "i2c Address of TA101 detected at : \n0x17\n");
+            snprintf(buff_th7,200, "i2c Address of TA101 detected at : \n0x17\n");
             //ESP_LOGI("Partial", "%s",buff_th6);
         }
         else if(pkt.thread_id == 32)
@@ -558,8 +559,8 @@ void CombinerThread(void *arg)
             CombinedPacket combined;
 
             snprintf(combined.full_line, sizeof(combined.full_line),
-                        "\nTimestamp: %ldms\n%s%s%s%s%s%s%s",
-                        app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5, buff_th6 ,buff_th7);
+                        "\nTimestamp: %ldms\n%s%s%s%s%s%s%s\nReset Counter: %ld",
+                        app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5, buff_th6 ,buff_th7,reset_ctr++);
             //snprintf(combined.full_line, sizeof(combined.full_line),"\nTimestamp: %ldms\n%s%s\n",app_millis(),buff_th4,buff_th5);
             //ESP_LOGI("Combining", "%s", combined.full_line);
             

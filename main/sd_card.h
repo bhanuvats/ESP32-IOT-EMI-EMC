@@ -71,4 +71,6 @@ void sd_card();
 esp_err_t s_example_write_file(const char *path, char *data);
 esp_err_t s_example_read_file(const char *path);
 
+extern long uint8_t reset_ctr;
+
 #endif /* MAIN_SD_CARD_H_ */

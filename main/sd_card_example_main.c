@@ -17,6 +17,8 @@ const char *SD = "SD Card";
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
 #endif
 
+long uint8_t reset_ctr = 0;
+
 
 
 esp_err_t s_example_write_file(const char *path, char *data)
@@ -58,6 +60,70 @@ esp_err_t s_example_read_file(const char *path)
 
 
     return ESP_OK;
+}
+long int reset_counter_fun(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    if (f == NULL) {
+        ESP_LOGE("SD", "Failed to open file for reading");
+        return -1;
+    }
+
+    fseek(f, 0, SEEK_END);
+    long int size = ftell(f);
+
+    if (size <= 0) {
+        fclose(f);
+        return 0;
+    }
+
+    const char *tag = "Reset Counter: ";
+    int tag_len = strlen(tag);
+
+    // We read backwards in larger chunks to avoid splitting text too much.
+    const int CHUNK_SIZE = 128;
+    char buffer[CHUNK_SIZE + 1];
+
+    long int pos = size;
+
+    // We'll hold leftover tail data between chunk reads
+    char tail[256] = {0};
+
+    while (pos > 0)
+    {
+        int read_size = (pos >= CHUNK_SIZE) ? CHUNK_SIZE : pos;
+        pos -= read_size;
+
+        fseek(f, pos, SEEK_SET);
+        fread(buffer, 1, read_size, f);
+        buffer[read_size] = '\0';
+
+        // Build a combined search buffer = this chunk + tail
+        char combined[CHUNK_SIZE + sizeof(tail)];
+        snprintf(combined, sizeof(combined), "%s%s", buffer, tail);
+
+        // Search for LAST occurrence inside combined
+        char *last_ptr = NULL;
+        char *p = combined;
+
+        while ((p = strstr(p, tag)) != NULL) {
+            last_ptr = p;
+            p += tag_len;
+        }
+
+        // If we found a match in this combined region
+        if (last_ptr != NULL) {
+            long int counter = atol(last_ptr + tag_len);
+            fclose(f);
+            return counter;
+        }
+
+        // Save tail for next backward step
+        strncpy(tail, buffer, sizeof(tail) - 1);
+    }
+
+    fclose(f);
+    return 0;
 }
 
 void sd_card()
@@ -232,16 +298,16 @@ void sd_card()
     }
 #endif // CONFIG_EXAMPLE_FORMAT_SD_CARD
 
-    /*const char *file_nihao = MOUNT_POINT"/nihao.txt";
+    /*const char *file_sd = MOUNT_POINT"/SD.txt";
     memset(data, 0, EXAMPLE_MAX_CHAR_SIZE);
     snprintf(data, EXAMPLE_MAX_CHAR_SIZE, "%s %s!\n", "ravi", card->cid.name);
-    ret = s_example_write_file(file_nihao, data);
+    ret = s_example_write_file(file_sd, data);
     if (ret != ESP_OK) {
         return;
     }
 
     //Open file for reading
-    ret = s_example_read_file(file_nihao);
+    ret = s_example_read_file(file_sd);
     if (ret != ESP_OK) {
         return;
     }
@@ -258,5 +324,8 @@ void sd_card()
         return;
     }*/
 //#endif
+
+reset_ctr = reset_counter_fun(MOUNT_POINT"/SD.txt");
+
 printf("SD CARD done\n");
 }
