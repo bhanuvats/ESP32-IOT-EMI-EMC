@@ -9,6 +9,7 @@ menuconfig changes;
 
 -->Serial Flaser Config
   -->Flash Size(32 MB)
+  -->detect flash size when flashing bootloader (.)
 
   
 -->Example Ethernet Configuration
@@ -26,8 +27,6 @@ menuconfig changes;
           -->Ignore PSRAM when not found (.)
           -->Try to allocate WiFi and LWIP in SPIRAM (.)
           -->Reserve amount of data for DMA and internal memory (16384)
-          -->Allow .bss (.)
-          -->Allow .noinit (.)
   
   -->ESP System Settings
     -->Panic reboot delay (1)
