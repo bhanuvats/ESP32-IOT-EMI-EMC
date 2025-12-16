@@ -17,7 +17,7 @@ const char *SD = "SD Card";
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
 #endif
 
-long uint8_t reset_ctr = 0;
+long int reset_ctr = 0;
 
 
 
@@ -326,6 +326,15 @@ void sd_card()
 //#endif
 
 reset_ctr = reset_counter_fun(MOUNT_POINT"/SD.txt");
+
+printf("\nThe reset counter is : %d\n",reset_ctr);
+
+
+if (reset_ctr < 0) {
+    reset_ctr = 0;  // error fallback
+}
+
+reset_ctr++;
 
 printf("SD CARD done\n");
 }

@@ -135,8 +135,10 @@ void wifi_main(void)
     esp_wifi_enable_tx_statistics(ESP_WIFI_ACI_BE, true);
 #endif
 
+    esp_err_t err = wifi_cmd_sta_disconnect();
+
     wifi_scan_config_t scan_config = {0};
-    esp_err_t err = esp_wifi_scan_start(&scan_config, false);
+    err = esp_wifi_scan_start(&scan_config, false);
 
     xTaskCreate(wifi_task, "wifi_task", 4096, NULL, 5, NULL);
 }

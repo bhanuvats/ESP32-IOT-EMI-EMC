@@ -77,6 +77,7 @@ ring_buffer_t g_tx_ring;
 
 
 bool scan_start = false;
+extern long int reset_ctr;
 
 const char *TAG = "EMI-EMC";
 
@@ -559,8 +560,8 @@ void CombinerThread(void *arg)
             CombinedPacket combined;
 
             snprintf(combined.full_line, sizeof(combined.full_line),
-                        "\nTimestamp: %ldms\n%s%s%s%s%s%s%s\nReset Counter: %ld",
-                        app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5, buff_th6 ,buff_th7,reset_ctr++);
+                        "\nTimestamp: %ldms\n%s%s%s%s%s%s%s\nReset Counter: %ld\n",
+                        app_millis(),buff_th1, buff_th2, buff_th3, buff_th4, buff_th5, buff_th6 ,buff_th7,reset_ctr);
             //snprintf(combined.full_line, sizeof(combined.full_line),"\nTimestamp: %ldms\n%s%s\n",app_millis(),buff_th4,buff_th5);
             //ESP_LOGI("Combining", "%s", combined.full_line);
             
