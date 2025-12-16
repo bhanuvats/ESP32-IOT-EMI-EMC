@@ -9,12 +9,17 @@ menuconfig changes;
 
 -->Serial Flaser Config
   -->Flash Size(32 MB)
+
+  
 -->Example Ethernet Configuration
   -->Ethernet PHY Decive (LAN87xx)
   -->PHY Address (0)
+
+
 -->Component Config
   -->I2C Configurations
     -->I2C ISR IRAM-Safe (.)
+  
   -->ESP PSRAM
     -->Support for external PSRAM (.)
       -->PSRAM Config
@@ -23,9 +28,11 @@ menuconfig changes;
           -->Reserve amount of data for DMA and internal memory (16384)
           -->Allow .bss (.)
           -->Allow .noinit (.)
+  
   -->ESP System Settings
     -->Panic reboot delay (1)
     -->Main task stack size (4096)
+  
   -->FreeRTOS
     -->Kernel
       -->configMinimal_Stack_Size (16384)
