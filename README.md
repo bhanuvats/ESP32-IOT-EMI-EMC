@@ -56,3 +56,10 @@ menuconfig changes;
         -->configMinimal_Stack_Size (16384)
         
         -->configQUEUE_Registry_Size (1)
+        
+
+    -->ESP-Hosted config
+
+      -->Hosted SDIO Configuration
+
+        -->GPIO pin for Resetting slave (26)
